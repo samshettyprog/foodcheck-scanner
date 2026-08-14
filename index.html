@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  />
+  >
 
   <title>FoodCheck Scanner</title>
 
@@ -18,163 +19,476 @@
 
     body {
       margin: 0;
-      padding: 20px;
+      padding: 18px;
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      color: #222;
+      background: #f6f7f9;
+      color: #202124;
     }
 
     .container {
+      width: 100%;
       max-width: 520px;
       margin: 0 auto;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 8px;
+      margin: 8px 0 4px;
+      font-size: 28px;
     }
 
     .subtitle {
       text-align: center;
-      margin-bottom: 20px;
-      color: #555;
+      color: #5f6368;
+      margin-bottom: 18px;
+      font-size: 15px;
+    }
+
+    .scanner-card {
+      background: white;
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
 
     #reader {
       width: 100%;
-      background: white;
-      border-radius: 16px;
+      min-height: 280px;
+      border-radius: 14px;
       overflow: hidden;
-      padding: 8px;
+      background: #111;
+      position: relative;
+    }
+
+    #reader video {
+      width: 100% !important;
+      height: auto !important;
+      object-fit: cover;
+    }
+
+    .scan-guide {
+      margin-top: 12px;
+      text-align: center;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .buttons {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button,
+    .photo-button {
+      width: 100%;
+      min-height: 50px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #startButton {
+      background: #2f6fed;
+      color: white;
+    }
+
+    #stopButton {
+      background: #eceff3;
+      color: #222;
+      display: none;
+    }
+
+    .photo-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eceff3;
+      color: #222;
+    }
+
+    #photoInput {
+      display: none;
     }
 
     #status {
-      margin-top: 18px;
+      margin-top: 16px;
       padding: 14px;
-      background: white;
       border-radius: 12px;
+      background: white;
       text-align: center;
-      font-size: 16px;
+      line-height: 1.4;
     }
 
     #barcodeValue {
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: 22px;
       font-weight: bold;
-      word-break: break-word;
+      word-break: break-all;
     }
 
     .success {
-      color: #137333;
+      background: #e7f6ec !important;
+      color: #126b32;
     }
 
-    .hint {
-      margin-top: 16px;
-      text-align: center;
-      color: #666;
-      font-size: 14px;
+    .error {
+      background: #fdecec !important;
+      color: #9b1c1c;
+    }
+
+    .tip {
+      margin-top: 14px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #555;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
 
-    <h1>FoodCheck</h1>
+<div class="container">
 
-    <div class="subtitle">
-      Scan the barcode on a food product
-    </div>
+  <h1>FoodCheck</h1>
+
+  <div class="subtitle">
+    Scan the barcode on a food product
+  </div>
+
+  <div class="scanner-card">
 
     <div id="reader"></div>
 
-    <div id="status">
-      Point your camera at the product barcode.
-
-      <div id="barcodeValue"></div>
+    <div class="scan-guide">
+      Hold the barcode inside the camera view.
     </div>
 
-    <div class="hint">
-      If asked, allow camera access.
+    <div class="buttons">
+
+      <button id="startButton">
+        Start Camera Scanner
+      </button>
+
+      <button id="stopButton">
+        Stop Camera
+      </button>
+
+      <label class="photo-button" for="photoInput">
+        Scan Barcode From Photo
+      </label>
+
+      <input
+        id="photoInput"
+        type="file"
+        accept="image/*"
+      >
+
     </div>
 
   </div>
 
-  <script>
-    let scanner;
-    let alreadyScanned = false;
+  <div id="status">
+    Tap <strong>Start Camera Scanner</strong>.
+  </div>
 
-    function onScanSuccess(decodedText, decodedResult) {
-      if (alreadyScanned) {
-        return;
-      }
+  <div class="tip">
+    For best results, keep the whole barcode visible, avoid glare,
+    and start about 15–25 cm away from the product rather than
+    holding the phone extremely close.
+  </div>
 
-      alreadyScanned = true;
+</div>
 
-      const barcode = String(decodedText).trim();
+<script>
 
-      document.getElementById("status").classList.add("success");
+  const html5QrCode = new Html5Qrcode(
+    "reader",
+    {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128
+      ],
 
-      document.getElementById("status").firstChild.textContent =
-        "Barcode scanned successfully:";
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: false
+      },
 
-      document.getElementById("barcodeValue").textContent =
-        barcode;
+      verbose: false
+    }
+  );
+
+  const startButton =
+    document.getElementById("startButton");
+
+  const stopButton =
+    document.getElementById("stopButton");
+
+  const photoInput =
+    document.getElementById("photoInput");
+
+  const statusBox =
+    document.getElementById("status");
+
+  let cameraRunning = false;
+  let alreadyScanned = false;
+
+
+  function showBarcode(barcode) {
+
+    alreadyScanned = true;
+
+    statusBox.className = "success";
+
+    statusBox.innerHTML =
+      "Barcode scanned successfully:" +
+      '<div id="barcodeValue">' +
+      barcode +
+      "</div>";
+
+  }
+
+
+  function showError(message) {
+
+    statusBox.className = "error";
+
+    statusBox.innerHTML = message;
+
+  }
+
+
+  function showMessage(message) {
+
+    statusBox.className = "";
+
+    statusBox.innerHTML = message;
+
+  }
+
+
+  async function barcodeSuccess(
+    decodedText,
+    decodedResult
+  ) {
+
+    if (alreadyScanned) {
+      return;
+    }
+
+    const barcode =
+      String(decodedText).trim();
+
+    showBarcode(barcode);
+
+    if (cameraRunning) {
 
       try {
-        scanner.clear();
+        await html5QrCode.stop();
       } catch (error) {
         console.log(error);
       }
+
+      cameraRunning = false;
+
+      startButton.style.display = "block";
+      stopButton.style.display = "none";
     }
+  }
 
-    function onScanFailure(error) {
-      // This happens constantly while the camera is searching.
-      // We intentionally ignore these messages.
+
+  function barcodeFailure(errorMessage) {
+
+    // The scanner generates failures constantly
+    // while searching, so we intentionally ignore them.
+
+  }
+
+
+  startButton.addEventListener(
+    "click",
+    async function () {
+
+      if (cameraRunning) {
+        return;
+      }
+
+      alreadyScanned = false;
+
+      showMessage(
+        "Starting rear camera..."
+      );
+
+      try {
+
+        await html5QrCode.start(
+
+          {
+            facingMode: "environment"
+          },
+
+          {
+            fps: 15,
+
+            qrbox: function(
+              viewfinderWidth,
+              viewfinderHeight
+            ) {
+
+              const width =
+                Math.floor(
+                  viewfinderWidth * 0.90
+                );
+
+              const height =
+                Math.floor(
+                  Math.min(
+                    viewfinderHeight * 0.33,
+                    150
+                  )
+                );
+
+              return {
+                width: width,
+                height: height
+              };
+            },
+
+            aspectRatio: 1.7777778
+          },
+
+          barcodeSuccess,
+
+          barcodeFailure
+
+        );
+
+        cameraRunning = true;
+
+        startButton.style.display = "none";
+        stopButton.style.display = "block";
+
+        showMessage(
+          "Camera ready. Point it at the product barcode."
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        showError(
+          "Could not start the camera. Make sure camera permission is allowed and try again."
+        );
+
+      }
+
     }
+  );
 
-    scanner = new Html5QrcodeScanner(
-      "reader",
-      {
-        fps: 10,
 
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
-          const width = Math.floor(viewfinderWidth * 0.85);
+  stopButton.addEventListener(
+    "click",
+    async function () {
 
-          const height = Math.floor(
-            Math.min(viewfinderHeight * 0.35, 160)
+      if (!cameraRunning) {
+        return;
+      }
+
+      try {
+
+        await html5QrCode.stop();
+
+        cameraRunning = false;
+
+        startButton.style.display = "block";
+        stopButton.style.display = "none";
+
+        showMessage(
+          "Camera stopped."
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    }
+  );
+
+
+  photoInput.addEventListener(
+    "change",
+    async function (event) {
+
+      const file =
+        event.target.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      alreadyScanned = false;
+
+
+      if (cameraRunning) {
+
+        try {
+          await html5QrCode.stop();
+        } catch (error) {
+          console.log(error);
+        }
+
+        cameraRunning = false;
+
+        startButton.style.display = "block";
+        stopButton.style.display = "none";
+      }
+
+
+      showMessage(
+        "Scanning barcode from photo..."
+      );
+
+
+      try {
+
+        const decodedText =
+          await html5QrCode.scanFile(
+            file,
+            true
           );
 
-          return {
-            width: width,
-            height: height
-          };
-        },
+        const barcode =
+          String(decodedText).trim();
 
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128
-        ],
+        showBarcode(barcode);
 
-        rememberLastUsedCamera: true,
-        showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true,
+      } catch (error) {
 
-        supportedScanTypes: [
-          Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-          Html5QrcodeScanType.SCAN_TYPE_FILE
-        ]
-      },
-      false
-    );
+        console.error(error);
 
-    scanner.render(
-      onScanSuccess,
-      onScanFailure
-    );
-  </script>
+        showError(
+          "No supported barcode was detected in that photo. Try another image with the full barcode clearly visible."
+        );
+
+      }
+
+
+      photoInput.value = "";
+
+    }
+  );
+
+</script>
+
 </body>
 </html>
