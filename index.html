@@ -48,7 +48,7 @@
       background: white;
       border-radius: 18px;
       padding: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     }
 
     .video-wrap {
@@ -75,9 +75,9 @@
       right: 7%;
       top: 37%;
       height: 26%;
-      border: 4px solid rgba(255,255,255,0.95);
+      border: 4px solid rgba(255, 255, 255, 0.95);
       border-radius: 10px;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.18);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.18);
     }
 
     .scan-guide {
@@ -221,7 +221,10 @@
 
     </div>
 
-    <img id="photoPreview" alt="Barcode preview">
+    <img
+      id="photoPreview"
+      alt="Barcode preview"
+    >
 
   </div>
 
@@ -230,19 +233,35 @@
   </div>
 
   <div class="tip">
-    Start around 20–30 cm away. Keep the barcode flat, well lit,
-    and fully visible. Slowly move closer only if necessary.
+    Start around 20–30 cm away. Keep the barcode flat,
+    well lit, and fully visible. Slowly move closer only
+    if necessary.
   </div>
 
 </div>
 
 <script>
-  const video = document.getElementById("video");
-  const startButton = document.getElementById("startButton");
-  const stopButton = document.getElementById("stopButton");
-  const photoInput = document.getElementById("photoInput");
-  const photoPreview = document.getElementById("photoPreview");
-  const statusBox = document.getElementById("status");
+
+  const FOODCHECK_URL =
+    "https://food-check-vxfvds.flutterflow.app/";
+
+  const video =
+    document.getElementById("video");
+
+  const startButton =
+    document.getElementById("startButton");
+
+  const stopButton =
+    document.getElementById("stopButton");
+
+  const photoInput =
+    document.getElementById("photoInput");
+
+  const photoPreview =
+    document.getElementById("photoPreview");
+
+  const statusBox =
+    document.getElementById("status");
 
   const codeReader =
     new ZXingBrowser.BrowserMultiFormatReader();
@@ -264,29 +283,71 @@
 
 
   function showBarcode(barcode) {
+
     statusBox.className = "success";
 
     statusBox.innerHTML =
       "Barcode scanned successfully:" +
       '<div id="barcodeValue">' +
       barcode +
+      "</div>" +
+      "<div style='margin-top:10px;'>" +
+      "Returning to FoodCheck..." +
       "</div>";
+
+    setTimeout(
+      function () {
+
+        window.location.href =
+          FOODCHECK_URL +
+          "?barcode=" +
+          encodeURIComponent(barcode);
+
+      },
+      1200
+    );
   }
 
 
   async function stopCamera() {
+
     if (controls) {
+
       try {
         controls.stop();
       } catch (error) {
         console.log(error);
       }
+
     }
 
     controls = null;
 
     startButton.style.display = "block";
     stopButton.style.display = "none";
+  }
+
+
+  async function barcodeSuccess(result) {
+
+    if (!result) {
+      return;
+    }
+
+    if (alreadyScanned) {
+      return;
+    }
+
+    alreadyScanned = true;
+
+    const barcode =
+      String(
+        result.getText()
+      ).trim();
+
+    await stopCamera();
+
+    showBarcode(barcode);
   }
 
 
@@ -303,9 +364,11 @@
       try {
 
         const constraints = {
+
           audio: false,
 
           video: {
+
             facingMode: {
               ideal: "environment"
             },
@@ -317,13 +380,19 @@
             height: {
               ideal: 1080
             }
+
           }
+
         };
+
 
         controls =
           await codeReader.decodeFromConstraints(
+
             constraints,
+
             video,
+
             async function (
               result,
               error,
@@ -345,7 +414,6 @@
                   result.getText()
                 ).trim();
 
-              showBarcode(barcode);
 
               try {
                 controlsFromCallback.stop();
@@ -353,15 +421,28 @@
                 console.log(error);
               }
 
+
               controls = null;
 
-              startButton.style.display = "block";
-              stopButton.style.display = "none";
+              startButton.style.display =
+                "block";
+
+              stopButton.style.display =
+                "none";
+
+
+              showBarcode(barcode);
             }
+
           );
 
-        startButton.style.display = "none";
-        stopButton.style.display = "block";
+
+        startButton.style.display =
+          "none";
+
+        stopButton.style.display =
+          "block";
+
 
         showMessage(
           "Camera ready. Point it at the product barcode."
@@ -376,6 +457,7 @@
         );
 
       }
+
     }
   );
 
@@ -383,11 +465,13 @@
   stopButton.addEventListener(
     "click",
     async function () {
+
       await stopCamera();
 
       showMessage(
         "Camera stopped."
       );
+
     }
   );
 
@@ -403,22 +487,27 @@
         return;
       }
 
+
       await stopCamera();
 
       alreadyScanned = false;
+
 
       showMessage(
         "Scanning barcode from photo..."
       );
 
+
       const objectUrl =
         URL.createObjectURL(file);
+
 
       photoPreview.src =
         objectUrl;
 
       photoPreview.style.display =
         "block";
+
 
       try {
 
@@ -427,10 +516,14 @@
             objectUrl
           );
 
+
         const barcode =
           String(
             result.getText()
           ).trim();
+
+
+        alreadyScanned = true;
 
         showBarcode(barcode);
 
@@ -446,18 +539,23 @@
 
         photoInput.value = "";
 
+
         setTimeout(
           function () {
+
             URL.revokeObjectURL(
               objectUrl
             );
+
           },
-          1000
+          2000
         );
 
       }
+
     }
   );
+
 </script>
 
 </body>
