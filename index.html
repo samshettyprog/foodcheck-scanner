@@ -185,6 +185,7 @@
   <div class="scanner-card">
 
     <div class="video-wrap">
+
       <video
         id="video"
         autoplay
@@ -193,6 +194,7 @@
       ></video>
 
       <div class="scan-box"></div>
+
     </div>
 
     <div class="scan-guide">
@@ -242,8 +244,16 @@
 
 <script>
 
+  /*
+    IMPORTANT:
+    This is the FlutterFlow HomePage route.
+    The scanned barcode will be added as:
+    ?barcode=XXXXXXXXXXXXX
+  */
+
   const FOODCHECK_URL =
-    "https://food-check-vxfvds.flutterflow.app/";
+    "https://food-check-vxfvds.flutterflow.app/HomePage";
+
 
   const video =
     document.getElementById("video");
@@ -263,22 +273,31 @@
   const statusBox =
     document.getElementById("status");
 
+
   const codeReader =
     new ZXingBrowser.BrowserMultiFormatReader();
 
+
   let controls = null;
+
   let alreadyScanned = false;
 
 
   function showMessage(message) {
+
     statusBox.className = "";
+
     statusBox.innerHTML = message;
+
   }
 
 
   function showError(message) {
+
     statusBox.className = "error";
+
     statusBox.innerHTML = message;
+
   }
 
 
@@ -295,17 +314,23 @@
       "Returning to FoodCheck..." +
       "</div>";
 
+
     setTimeout(
       function () {
 
-        window.location.href =
+        const redirectUrl =
           FOODCHECK_URL +
           "?barcode=" +
           encodeURIComponent(barcode);
 
+
+        window.location.href =
+          redirectUrl;
+
       },
       1200
     );
+
   }
 
 
@@ -314,40 +339,28 @@
     if (controls) {
 
       try {
+
         controls.stop();
+
       } catch (error) {
+
         console.log(error);
+
       }
 
     }
 
+
     controls = null;
 
-    startButton.style.display = "block";
-    stopButton.style.display = "none";
-  }
+
+    startButton.style.display =
+      "block";
 
 
-  async function barcodeSuccess(result) {
+    stopButton.style.display =
+      "none";
 
-    if (!result) {
-      return;
-    }
-
-    if (alreadyScanned) {
-      return;
-    }
-
-    alreadyScanned = true;
-
-    const barcode =
-      String(
-        result.getText()
-      ).trim();
-
-    await stopCamera();
-
-    showBarcode(barcode);
   }
 
 
@@ -357,9 +370,11 @@
 
       alreadyScanned = false;
 
+
       showMessage(
         "Starting rear camera..."
       );
+
 
       try {
 
@@ -400,14 +415,21 @@
             ) {
 
               if (!result) {
+
                 return;
+
               }
+
 
               if (alreadyScanned) {
+
                 return;
+
               }
 
+
               alreadyScanned = true;
+
 
               const barcode =
                 String(
@@ -416,22 +438,31 @@
 
 
               try {
+
                 controlsFromCallback.stop();
+
               } catch (error) {
+
                 console.log(error);
+
               }
 
 
               controls = null;
 
+
               startButton.style.display =
                 "block";
+
 
               stopButton.style.display =
                 "none";
 
 
-              showBarcode(barcode);
+              showBarcode(
+                barcode
+              );
+
             }
 
           );
@@ -439,6 +470,7 @@
 
         startButton.style.display =
           "none";
+
 
         stopButton.style.display =
           "block";
@@ -448,9 +480,11 @@
           "Camera ready. Point it at the product barcode."
         );
 
+
       } catch (error) {
 
         console.error(error);
+
 
         showError(
           "Could not start the camera. Check camera permission and try again."
@@ -468,6 +502,7 @@
 
       await stopCamera();
 
+
       showMessage(
         "Camera stopped."
       );
@@ -483,12 +518,16 @@
       const file =
         event.target.files[0];
 
+
       if (!file) {
+
         return;
+
       }
 
 
       await stopCamera();
+
 
       alreadyScanned = false;
 
@@ -499,11 +538,14 @@
 
 
       const objectUrl =
-        URL.createObjectURL(file);
+        URL.createObjectURL(
+          file
+        );
 
 
       photoPreview.src =
         objectUrl;
+
 
       photoPreview.style.display =
         "block";
@@ -525,19 +567,26 @@
 
         alreadyScanned = true;
 
-        showBarcode(barcode);
+
+        showBarcode(
+          barcode
+        );
+
 
       } catch (error) {
 
         console.error(error);
 
+
         showError(
           "No barcode was detected in that image. Try another photo with the barcode sharp and fully visible."
         );
 
+
       } finally {
 
-        photoInput.value = "";
+        photoInput.value =
+          "";
 
 
         setTimeout(
