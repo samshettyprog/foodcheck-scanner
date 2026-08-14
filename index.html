@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <title>FoodCheck Scanner</title>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    #reader {
+      width: 100%;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 8px;
+    }
+
+    #status {
+      margin-top: 18px;
+      padding: 14px;
+      background: white;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    #barcodeValue {
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .success {
+      color: #137333;
+    }
+
+    .hint {
+      margin-top: 16px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <h1>FoodCheck</h1>
+
+    <div class="subtitle">
+      Scan the barcode on a food product
+    </div>
+
+    <div id="reader"></div>
+
+    <div id="status">
+      Point your camera at the product barcode.
+
+      <div id="barcodeValue"></div>
+    </div>
+
+    <div class="hint">
+      If asked, allow camera access.
+    </div>
+
+  </div>
+
+  <script>
+    let scanner;
+    let alreadyScanned = false;
+
+    function onScanSuccess(decodedText, decodedResult) {
+      if (alreadyScanned) {
+        return;
+      }
+
+      alreadyScanned = true;
+
+      const barcode = String(decodedText).trim();
+
+      document.getElementById("status").classList.add("success");
+
+      document.getElementById("status").firstChild.textContent =
+        "Barcode scanned successfully:";
+
+      document.getElementById("barcodeValue").textContent =
+        barcode;
+
+      try {
+        scanner.clear();
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    function onScanFailure(error) {
+      // This happens constantly while the camera is searching.
+      // We intentionally ignore these messages.
+    }
+
+    scanner = new Html5QrcodeScanner(
+      "reader",
+      {
+        fps: 10,
+
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
+          const width = Math.floor(viewfinderWidth * 0.85);
+
+          const height = Math.floor(
+            Math.min(viewfinderHeight * 0.35, 160)
+          );
+
+          return {
+            width: width,
+            height: height
+          };
+        },
+
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128
+        ],
+
+        rememberLastUsedCamera: true,
+        showTorchButtonIfSupported: true,
+        showZoomSliderIfSupported: true,
+
+        supportedScanTypes: [
+          Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+          Html5QrcodeScanType.SCAN_TYPE_FILE
+        ]
+      },
+      false
+    );
+
+    scanner.render(
+      onScanSuccess,
+      onScanFailure
+    );
+  </script>
+</body>
+</html>
